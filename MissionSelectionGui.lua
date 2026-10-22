@@ -56,7 +56,13 @@ function MissionSelectionGui:_on_raid_clicked(raid_data, ...)
         self._active_card_panel:show()
         self._active_card_details:set_card_details(raid_data.mission_data.active_card)
         self._active_card_details:set_control_mode(RaidGUIControlCardDetails.MODE_VIEW_ONLY)
-        self._active_card_details._card_control:set_xp_bonus("+" .. raid_data.mission_data.active_card.bonus_xp)
+        local card_control = self._active_card_details._card_control
+        card_control:set_xp_bonus("+" .. raid_data.mission_data.active_card.bonus_xp)
+        local xp_bonus = card_control._xp_bonus
+        local center_x = xp_bonus:center_x()
+        local _, _, text_w = xp_bonus:text_rect()
+        xp_bonus:set_w(math.max(xp_bonus:w(), text_w))
+        xp_bonus:set_center_x(center_x)
     end
 
     if daily_bounty_was_completed and not self._bounty_completed then
