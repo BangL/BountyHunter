@@ -1,12 +1,14 @@
 <?xml version="1.0"?>
 <mod name="BountyHunter"
     author="BangL"
-    version="1.1"
+    version="1.2"
 	min_sblt_version="2.0.0"
     color="60 60 60">
-    <!-- <updates>
-        <update provider="modworkshop" identifier="" />
-    </updates> -->
+    <updates>
+		<update identifier="bountyhunter">
+			<host meta="https://raw.githubusercontent.com/BangL/raid-mods-meta/main/bountyhunter.json"/>
+		</update>
+	</updates>
     <localization directory="loc">
         <!-- <loc file="chinese_simplified.json" language="chinese_simplified"/> -->
         <loc file="english.json" language="english" />
