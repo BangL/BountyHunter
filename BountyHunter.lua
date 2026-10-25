@@ -1,5 +1,58 @@
 BountyHunter = BountyHunter or class()
 
+-- numeric seed -> raw seed string (host: from make_custom_bounty_job, client: synced from host)
+BountyHunter.raw_seeds = BountyHunter.raw_seeds or {}
+BountyHunter.request_times = BountyHunter.request_times or {}
+
+BountyHunter.NET_REQUEST = "BountyHunter_request"
+BountyHunter.NET_SEED = "BountyHunter_seed"
+
+-- returns the raw seed string for a bounty job (or nil). clients ask the host if it is not known yet.
+function BountyHunter:get_raw_seed(job)
+    if not job or not job.bounty then
+        return nil
+    end
+
+    local raw = job.raw_seed or self.raw_seeds[job.seed]
+    if raw then
+        return raw
+    end
+
+    if job.seed and LuaNetworking:IsMultiplayer() and LuaNetworking:IsClient() then
+        local now = TimerManager:wall():time()
+        if not self.request_times[job.seed] or now - self.request_times[job.seed] > 5 then
+            self.request_times[job.seed] = now
+            local host = managers.network:session():server_peer()
+            if host then
+                LuaNetworking:SendToPeer(host:id(), self.NET_REQUEST, tostring(job.seed))
+            end
+        end
+    end
+
+    return nil
+end
+
+Hooks:Add("NetworkReceivedData", "BountyHunter_NetworkReceivedData", function(sender, id, data)
+    if id == BountyHunter.NET_REQUEST then
+        -- host: answer with the raw seed of the current bounty job
+        local seed = tonumber(data)
+        local raw = seed and BountyHunter.raw_seeds[seed]
+        if raw and LuaNetworking:IsHost() then
+            LuaNetworking:SendToPeer(sender, BountyHunter.NET_SEED, seed .. ":" .. raw)
+        end
+    elseif id == BountyHunter.NET_SEED and LuaNetworking:IsClient() then
+        -- client: only accept from the host
+        local session = managers.network and managers.network:session()
+        local host = session and session:server_peer()
+        if host and host:id() == sender then
+            local seed, raw = data:match("^(%d+):(.+)$")
+            if seed then
+                BountyHunter.raw_seeds[tonumber(seed)] = raw
+            end
+        end
+    end
+end)
+
 function BountyHunter:xor(a, b)
     local result = 0
     local bit = 1
@@ -76,6 +129,7 @@ function BountyHunter:make_custom_bounty_job(raw_seed)
     base_job_data.custom_bounty = true
     if raw_seed ~= randomseed then
         base_job_data.raw_seed = raw_seed
+        self.raw_seeds[randomseed] = raw_seed
     end
 
     if base_job_data.greed_items then
