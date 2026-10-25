@@ -143,8 +143,7 @@ function BountyHunter:make_custom_bounty_job(raw_seed)
     return base_job_data
 end
 
-function BountyHunter:get_random_raw_seed()
-    return utf8.to_upper(table.random({
+BountyHunter.builtin_seeds = {
         "Aerodrome",
         "Airstrike",
         "Allies",
@@ -257,6 +256,9 @@ function BountyHunter:get_random_raw_seed()
         "Molotov",
         "Mortar",
         "Munitions",
+        "NEIN NEIN NEIN",
+        "NEIN NEIN NEIN!",
+        "NEIN! NEIN! NEIN!",
         "Nightfall",
         "Occupation",
         "Occupied",
@@ -329,5 +331,110 @@ function BountyHunter:get_random_raw_seed()
         "Wolfgang",
         "Wreckage",
         "Zeppelin",
-    }))
+    }
+
+BountyHunter.POOL_MODES = { "builtin", "saved", "both" }
+BountyHunter.SAVE_PATH = SavePath .. "BountyHunter.json"
+
+function BountyHunter:load_data()
+    self.data = { saved = {}, pool = "builtin" }
+    local file = io.open(self.SAVE_PATH, "r")
+    if file then
+        local ok, decoded = blt.pcall(json.decode, file:read("*a"))
+        file:close()
+        if ok and type(decoded) == "table" then
+            if type(decoded.saved) == "table" then
+                self.data.saved = decoded.saved
+            end
+            if table.contains(self.POOL_MODES, decoded.pool) then
+                self.data.pool = decoded.pool
+            end
+        end
+    end
 end
+
+function BountyHunter:save_data()
+    local file = io.open(self.SAVE_PATH, "w")
+    if file then
+        file:write(json.encode(self.data))
+        file:close()
+    end
+end
+
+local function seed_key(seed)
+    return utf8.to_upper(tostring(seed))
+end
+
+function BountyHunter:sort_saved_seeds()
+    table.sort(self.data.saved, function(a, b)
+        return seed_key(a) < seed_key(b)
+    end)
+end
+
+function BountyHunter:is_seed_saved(seed)
+    local key = seed_key(seed)
+    for _, v in ipairs(self.data.saved) do
+        if seed_key(v) == key then
+            return true, v
+        end
+    end
+    return false
+end
+
+-- saves the seed, or removes it again if it is saved already. returns true if it is saved afterwards
+function BountyHunter:toggle_saved_seed(seed)
+    if seed == nil then
+        return false
+    end
+    local saved, entry = self:is_seed_saved(seed)
+    if saved then
+        table.delete(self.data.saved, entry)
+    else
+        table.insert(self.data.saved, type(seed) == "number" and seed or utf8.to_upper(seed))
+        self:sort_saved_seeds()
+    end
+    self:save_data()
+    return not saved
+end
+
+function BountyHunter:set_pool_mode(mode)
+    if table.contains(self.POOL_MODES, mode) and self.data.pool ~= mode then
+        self.data.pool = mode
+        self:save_data()
+    end
+end
+
+-- the seed shown/saved for a (bounty) job: raw text if known, else the number
+function BountyHunter:job_seed(job)
+    return job and job.bounty and (self:get_raw_seed(job) or job.seed) or nil
+end
+
+function BountyHunter:get_random_raw_seed()
+    local pool = {}
+    if self.data.pool ~= "saved" then
+        for _, v in ipairs(self.builtin_seeds) do
+            table.insert(pool, v)
+        end
+    end
+    if self.data.pool ~= "builtin" then
+        -- a saved built-in seed must not get twice the chance
+        local present = {}
+        for _, v in ipairs(pool) do
+            present[seed_key(v)] = true
+        end
+        for _, v in ipairs(self.data.saved) do
+            if not present[seed_key(v)] then
+                table.insert(pool, v)
+            end
+        end
+    end
+    if #pool == 0 then
+        pool = self.builtin_seeds
+    end
+
+    local seed = table.random(pool)
+    return type(seed) == "string" and utf8.to_upper(seed) or seed
+end
+
+BountyHunter:load_data()
+BountyHunter:sort_saved_seeds()

@@ -30,13 +30,14 @@ function HUDTabScreen:_refresh_card_info(...)
     end
 
     local job = not managers.raid_job:is_camp_loaded() and managers.raid_job:current_job()
-    local seed = job and job.bounty and (BountyHunter:get_raw_seed(job) or job.seed)
+    local seed = BountyHunter:job_seed(job)
 
     if seed and self._active_card_panel:visible() then
         local title = self._active_card_panel:child("active_card_title")
         local _, _, title_w = title:text_rect()
 
-        self._bounty_seed_text:set_text(utf8.to_upper(managers.localization:text("custom_bounty_seed")) .. " " .. tostring(seed))
+        self._bounty_seed_text:set_text(utf8.to_upper(managers.localization:text("custom_bounty_seed")) .. " " .. tostring(seed) ..
+            (BountyHunter:is_seed_saved(seed) and " *" or ""))
         self._bounty_seed_text:set_x(title:x() + title_w + 15)
         self._bounty_seed_text:set_visible(true)
     else
