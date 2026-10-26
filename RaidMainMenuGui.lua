@@ -3,12 +3,12 @@ local _layout_original = RaidMainMenuGui._layout
 function RaidMainMenuGui:_layout(...)
     _layout_original(self, ...)
 
-    -- in-mission pause menu only: show the seed of the active bounty and let the player (un)save it
-    if RaidMenuCallbackHandler:is_in_main_menu() or managers.raid_job:is_camp_loaded() then
+    -- pause menu only: show the seed of the active bounty (in camp: the selected one) and let the player (un)save it
+    if RaidMenuCallbackHandler:is_in_main_menu() then
         return
     end
 
-    local seed = BountyHunter:job_seed(managers.raid_job:current_job())
+    local seed = BountyHunter:job_seed(BountyHunter:displayed_job())
     if not seed then
         return
     end

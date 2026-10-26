@@ -404,6 +404,14 @@ function BountyHunter:set_pool_mode(mode)
     end
 end
 
+-- the job whose seed is shown: in camp the selected one, in a mission the current one
+function BountyHunter:displayed_job()
+    if managers.raid_job:is_camp_loaded() then
+        return managers.raid_job:selected_job()
+    end
+    return managers.raid_job:current_job()
+end
+
 -- the seed shown/saved for a (bounty) job: raw text if known, else the number
 function BountyHunter:job_seed(job)
     return job and job.bounty and (self:get_raw_seed(job) or job.seed) or nil
