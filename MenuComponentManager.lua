@@ -70,7 +70,7 @@ Hooks:Add("MenuComponentManagerInitialize", "BountyHunter_MenuComponentManagerIn
             name = "bounty_options",
             name_id = "bounty_title",
             inject_list = "blt_options",
-            icon = "waypoint_special_escape",
+            icon = "waypoint_special_dog_tags",
             class = BountyHunterMenu
         })
     end
