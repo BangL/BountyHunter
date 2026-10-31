@@ -6,7 +6,7 @@
     color="60 60 60">
     <updates>
 		<update identifier="bountyhunter">
-			<host meta="https://raw.githubusercontent.com/BangL/raid-mods-meta/main/bountyhunter.json"/>
+			<host meta="https://raw.githubusercontent.com/BangL/raid-mods-meta/main/bountyhunter.json" patchnotes="https://github.com/BangL/BountyHunter/blob/master/CHANGELOG.md"/>
 		</update>
 	</updates>
     <localization directory="loc">
